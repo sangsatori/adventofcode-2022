@@ -1,4 +1,6 @@
-export default async function main(lines: AsyncIterable<string>) {
+import { Solver } from './utils.ts';
+
+const fn: Solver<number> = async (lines) => {
     const values = new Map([
         [97, 1], // a to z
         [65, 27] // A to Z
@@ -49,3 +51,5 @@ export default async function main(lines: AsyncIterable<string>) {
 
     return [res1, res2];
 }
+
+export default fn;
