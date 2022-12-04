@@ -1,32 +1,31 @@
 import { Solver } from "./utils.ts";
 
 const fn: Solver<number> = async (lines) => {
-    let fullOverlapCount = 0,
-        partialOverlapCount = 0;
+    let full    = 0,
+        partial = 0;
     for await (const line of lines) {
-        const [a, b] = line.split(',').map(s => {
-            const [from, to] = (s.match(/\d+/g) as RegExpMatchArray)
-                .map(s => Number.parseInt(s, 10));
-            const items = new Set();
-            for (let i = from; i <= to; i++)
-                items.add(i);
-            return items;
-        });
-        const [shorter, longer] = (a.size < b.size) ? [a, b] : [b, a];
-        let fullOverlap = true,
-            partialOverlap = false;
-        for (const v of shorter) {
-            if (!partialOverlap && longer.has(v))
-                partialOverlap = true;
-            if (fullOverlap && !longer.has(v))
-                fullOverlap = false;
+        const [short, long] = line
+            .split(',')
+            .map(s => {
+                const items: Set<number> = new Set();
+                const [from, to] = (s.match(/\d+/g) as RegExpMatchArray)
+                    .map(s => Number.parseInt(s));
+                for (let i = from; i <= to; i++) items.add(i);
+                return items;
+            })
+            .sort(({ size: a }, { size: b }) => a - b);
+        let isFull      = true,
+            isPartial   = false;
+        for (const v of short) {
+            if (!isPartial && long.has(v))
+                isPartial = true;
+            if (isFull && !long.has(v))
+                isFull = false;
         }
-        if (fullOverlap)
-            fullOverlapCount++;
-        if (partialOverlap)
-            partialOverlapCount++;
+        if (isFull) full++;
+        if (isPartial) partial++;
     }
-    return [fullOverlapCount, partialOverlapCount];
+    return [full, partial];
 }
 
 export default fn;
