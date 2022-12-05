@@ -1,49 +1,40 @@
 import { Solver } from "./utils.ts";
 
+type Stack = string[][]
+
+const initStack = (length: number): Stack =>
+    Array(Math.ceil(length / 4))
+        .fill(null)
+        .map(() => [])
+
 const fn: Solver<string> = async (lines) => {
     let buildPhase = true;
-    let a: string[][];
-    let b: string[][] | null = null;
+    let a: Stack | undefined,
+        b: Stack | undefined;
     for await (const l of lines) {
-        if (!a || !b) {
-            a = [];
-            b = [];
-            for (let i = 0; i < Math.ceil(l.length / 4); i++) {
-                a[i] = [];
-                b[i] = [];
-            }
-        }
+        a = a ?? initStack(l.length);
+        b = b ?? initStack(l.length);
         if (buildPhase && l.match(/\[/)) {
             (l.match(/.{1,4}/g) as string[])
-                .map(s => s.trim())
-                .forEach((crate, i) => {
-                if (crate) {
-                    (a as string[][])[i].unshift((crate.match(/[A-Z]/) as string[])[0]);
-                    (b as string[][])[i].unshift((crate.match(/[A-Z]/) as string[])[0]);
-                }
-            })
+                .forEach((str, i) => {
+                    const char = str.match(/[A-Z]/)?.[0];
+                    if (char) for (const s of [a, b]) {
+                        s?.[i].unshift(char);
+                    }
+                })
+        } else if (l.startsWith('move')) {
+            let [count, from, to] = l.match(/\d+/g)?.map(s => Number.parseInt(s)) as number[];
+            from--, to--;
+            for (let i = 0; i < count; i++) {
+                a[to].push(a[from].pop() as string);
+            }
+            b[to].push(...b[from].splice(-count));
         } else buildPhase = false;
-
-        if (!buildPhase && l.startsWith('move')) {
-            let [count, from, to] = (l.match(/\d+/g) as string[]).map(s => Number.parseInt(s));
-            from--;
-            to--;
-            for (let i = 0; i < count; i++)
-                a[to].push(
-                    a[from].pop() as string);
-            b[to].push(
-                ...b[from].splice(-count));
-        }
-
     }
-    return [
-        (a as string[][])
-            .map(stack => stack[stack.length - 1])
-            .join(''),
-        (b as string[][])
-            .map(stack => stack[stack.length - 1])
-            .join('')
-    ];
+    return [a, b].map(s => (s as Stack)
+        .map(stack => stack[stack.length - 1])
+        .join('')
+    ) as [string, string];
 }
 
 export default fn;
